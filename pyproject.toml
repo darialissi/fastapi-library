@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "fastapi-library"
+version = "0.1.0"
+description = "RESTful API for library"
+authors = ["darialissi"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = {extras = ["standard"], version = "^0.115.7"}
+pydantic-settings = "^2.7.1"
+advanced-alchemy = "^0.30.2"
+pyjwt = {extras = ["crypto"], version = "^2.10.1"}
+bcrypt = "^4.2.1"
+asyncpg = "^0.30.0"
+redis = "^5.2.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+isort = "^5.13.2"
+flake8-pyproject = "^1.2.3"
+
+[tool.black]
+line-length = 90
+target_version = ["py311"]
+
+[tool.isort]
+profile = "black"
+py_version = 311
+
+[tool.flake8]
+ignore = ['E501']
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

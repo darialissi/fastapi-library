@@ -14,5 +14,7 @@
 - cd fastapi-library && docker-compose up
 #
 
-Документация доступна на http://127.0.0.1:8000/docs
-![Swagger](docs.png)
+Документация доступна на http://127.0.0.1:8000/docs 
+
+![Swagger-1](docs-1.png)
+![Swagger-2](docs-2.png)

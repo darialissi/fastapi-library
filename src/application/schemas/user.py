@@ -33,7 +33,7 @@ class UserReturn(BaseModel):
 
 class UserUpdate(BaseModel):
     """
-    Схема модели User, валидирует данные для обновления
+    Схема модели User, валидирует ввод при обновлении
     """
 
     username: str = Field(min_length=5)

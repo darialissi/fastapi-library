@@ -32,6 +32,16 @@ class Book(BaseModel):
     model_config = ConfigDict(use_enum_values=True)
 
 
+class BookUpdate(BaseModel):
+    """
+    Схема модели Book, валидирует ввод при обновлении
+    """
+
+    title: Optional[str] = Field(default=None)
+    description: Optional[str] = Field(min_length=5, default=None)
+    available_count: Optional[int] = Field(ge=0, default=None)
+
+
 class BookReturn(BaseModel):
     """
     Общая схема модели Book, валидирует вывод
@@ -52,7 +62,7 @@ class BookReturn(BaseModel):
 
 class BookUserReturn(BaseModel):
     """
-    Схема модели Book с дополнительными полями (relationship)
+    Схема модели Book, валидирует вывод с дополнительными полями (relationship)
     """
 
     book_id: int

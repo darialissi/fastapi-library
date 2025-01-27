@@ -20,5 +20,5 @@ class BookModel(base.BigIntBase):
         pg.ARRAY(Enum(GenreType, create_constraint=False, native_enum=False))
     )
 
-    users: Mapped[List["BookUserModel"]] = relationship(back_populates="book")  # type: ignore # noqa: F821
+    users: Mapped[List["BookUserModel"]] = relationship(back_populates="book", cascade="all, delete-orphan")  # type: ignore # noqa: F821
     authors: Mapped[List["AuthorModel"]] = relationship(back_populates="book")  # type: ignore # noqa: F821

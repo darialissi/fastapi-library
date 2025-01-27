@@ -16,4 +16,4 @@ class UserModel(base.BigIntBase):
         Enum(RoleType, create_constraint=False, native_enum=False)
     )
 
-    books: Mapped[List["BookUserModel"]] = relationship(back_populates="user")  # type: ignore # noqa: F821
+    books: Mapped[List["BookUserModel"]] = relationship(back_populates="user", cascade="all, delete-orphan")  # type: ignore # noqa: F821

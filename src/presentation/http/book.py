@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 
 from application.schemas.author import Author, AuthorReturn
 from application.schemas.book import Book, BookReturn, BookUpdate
-from application.schemas.user import UserReturn
+from application.schemas.user import UserAuth
 from application.services.author import AuthorService
 from application.services.book import BookService
 from application.services.user import UserService
@@ -33,7 +33,7 @@ book_router = APIRouter(
 async def add_book(
     book: Book,
     books_service: Annotated[BookService, Depends(provide_books_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> BookReturn:
     existed = await books_service.get_book(title=book.title)
     if existed:
@@ -51,15 +51,12 @@ async def get_books(
     return [BookReturn.model_validate(book) for book in books]
 
 
-@book_router.patch(
-    "/borrow",
-    summary="Выдача книги читателю",
-)
+@book_router.patch("/borrow", summary="Выдача книги читателю")
 async def borrow_book(
     title: str,
     books_service: Annotated[BookService, Depends(provide_books_service)],
     user_service: Annotated[UserService, Depends(provide_users_service)],
-    reader: Annotated[UserReturn, Depends(is_reader)],
+    reader: Annotated[UserAuth, Depends(is_reader)],
     logger: Annotated[logging.Logger, Depends(get_logger)],
 ) -> BookReturn:
 
@@ -84,15 +81,12 @@ async def borrow_book(
     return BookReturn.model_validate(resp)
 
 
-@book_router.patch(
-    "/return",
-    summary="Возврат книги читателем",
-)
+@book_router.patch("/return", summary="Возврат книги читателем")
 async def return_book(
     title: str,
     books_service: Annotated[BookService, Depends(provide_books_service)],
     user_service: Annotated[UserService, Depends(provide_users_service)],
-    reader: Annotated[UserReturn, Depends(is_reader)],
+    reader: Annotated[UserAuth, Depends(is_reader)],
     logger: Annotated[logging.Logger, Depends(get_logger)],
 ) -> BookReturn:
 
@@ -119,7 +113,7 @@ async def update_book(
     id: int,
     params: Annotated[BookUpdate, Depends()],
     books_service: Annotated[BookService, Depends(provide_books_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> BookReturn:
 
     if params.title:
@@ -137,7 +131,7 @@ async def update_book(
 async def delete_book(
     id: int,
     books_service: Annotated[BookService, Depends(provide_books_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> BookReturn:
 
     resp = await books_service.delete_book(id=id)
@@ -154,7 +148,7 @@ async def add_author(
     author: Author,
     author_service: Annotated[AuthorService, Depends(provide_authors_service)],
     books_service: Annotated[BookService, Depends(provide_books_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> AuthorReturn:
 
     existed = await books_service.get_book(id=id)

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from application.schemas.token import TokenSchema
-from application.schemas.user import UserReturn
+from application.schemas.user import UserAuth, UserReturn
 from application.services.token import TokenService
 from application.services.user import UserService
 from presentation.dependencies import (
@@ -51,30 +51,26 @@ async def auth_user(
 
 async def get_current_user(
     token_service: Annotated[TokenService, Depends(provide_token_service)],
-    user_service: Annotated[UserService, Depends(provide_users_service)],
-    token: Annotated[str, Depends(oauth2_scheme)],
-) -> UserReturn:
+    token: Annotated[TokenSchema, Depends(oauth2_scheme)],
+) -> UserAuth:
     """
     Получение текущего пользователя
     """
 
     if not token:
-        raise AuthExceptions.AccessAdminException()
+        raise AuthExceptions.AccessDeniedException()
 
     if not (sub := await token_service.get_valid_token_sub(token)):
-        raise AuthExceptions.AccessAdminException()
+        raise AuthExceptions.AccessDeniedException()
 
-    user_id = int(sub.split(":")[1])
+    _, user_id, role = sub.split(":")
 
-    if not (user := await user_service.get_user(id=user_id)):
-        raise AuthExceptions.InvalidCredentialsException()
-
-    return UserReturn.model_validate(user)
+    return UserAuth(id=user_id, role=role)
 
 
 async def is_access_granted(
-    user: Annotated[UserReturn, Depends(get_current_user)]
-) -> UserReturn:
+    user: Annotated[UserAuth, Depends(get_current_user)]
+) -> UserAuth:
     """
     Проверка привилегированных прав
     """
@@ -85,7 +81,7 @@ async def is_access_granted(
     return user
 
 
-async def is_reader(user: Annotated[UserReturn, Depends(get_current_user)]) -> UserReturn:
+async def is_reader(user: Annotated[UserAuth, Depends(get_current_user)]) -> UserAuth:
     """
     Проверка прав читателя
     """

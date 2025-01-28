@@ -35,7 +35,14 @@ class UserService:
         await self.user_repo.session.commit()
         return user
 
+    async def delete_user(self, id: int):
+        user = await self.user_repo.delete(item_id=id)
+        await self.user_repo.session.commit()
+        return user
+
     async def get_user_with_books(self, **filters) -> tuple:
-        user = await self.user_repo.get_one(**filters, load="selectin")
+        user = await self.user_repo.get_one_or_none(**filters, load="selectin")
+        if not user:
+            return None, None
         books = await user.awaitable_attrs.books
         return user, books

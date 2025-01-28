@@ -3,6 +3,15 @@ from pydantic import BaseModel, ConfigDict, Field
 from domain.models.role import RoleType
 
 
+class UserAuth(BaseModel):
+    """
+    Схема для аутентификации/авторизации
+    """
+
+    id: int
+    role: str
+
+
 class User(BaseModel):
     """
     Схема модели User, валидирует ввод

@@ -36,10 +36,6 @@ class TokenService:
             return None
         return sub
 
-    async def revoke_token(self, token: str):
-        payload: dict = Token.decode_jwt(
-            token=token, private_key=settings.TOKEN_KEY_SECRET
-        )
-        sub = payload.get("sub")
+    async def revoke_token(self, sub: str):
         await self.token_repo.revoke(sub)
         return sub

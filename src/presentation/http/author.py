@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 
 from application.schemas.author import AuthorReturn, AuthorUpdate
-from application.schemas.user import UserReturn
+from application.schemas.user import UserAuth
 from application.services.author import AuthorService
 from presentation.dependencies import provide_authors_service
 
@@ -31,7 +31,7 @@ async def update_author(
     id: int,
     params: Annotated[AuthorUpdate, Depends()],
     author_service: Annotated[AuthorService, Depends(provide_authors_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> AuthorReturn:
 
     resp = await author_service.update_author(id=id, author=params)
@@ -45,7 +45,7 @@ async def update_author(
 async def delete_author(
     id: int,
     author_service: Annotated[AuthorService, Depends(provide_authors_service)],
-    admin: Annotated[UserReturn, Depends(is_access_granted)],
+    admin: Annotated[UserAuth, Depends(is_access_granted)],
 ) -> AuthorReturn:
 
     resp = await author_service.delete_author(id=id)

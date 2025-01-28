@@ -10,6 +10,10 @@ class AuthExceptions:
         detail = "Недействительные аутентификационные данные"
         headers = {"WWW-Authenticate": "Bearer"}
 
+    class AccessDeniedException(HTTPExceptionBase):
+        status_code = status.HTTP_403_FORBIDDEN
+        detail = "Необходима авторизация"
+
     class AccessAdminException(HTTPExceptionBase):
         status_code = status.HTTP_403_FORBIDDEN
         detail = "Необходимы права администратора"

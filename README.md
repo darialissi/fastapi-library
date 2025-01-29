@@ -18,3 +18,23 @@
 
 ![Swagger-1](docs-1.png)
 ![Swagger-2](docs-2.png)
+
+#
+
+#### Тестирование
+
+1. Поднимаем postgres и redis
+   
+   **docker-compose --file docker-compose.local-tests.yml up -d**
+
+2. Устанавливаем poetry
+
+   **pip install poetry**
+
+3. Подтягиваем зависимости
+   
+   **poetry install**
+
+4. Запускаем pytest
+   
+   **poetry run pytest**

@@ -13,7 +13,7 @@ from domain.repositories.author import AuthorRepo
 from domain.repositories.book import BookRepo
 from domain.repositories.token import TokenRepo
 from domain.repositories.user import UserRepo
-from infrastructure.database import alchemy, redis_client
+from infrastructure.database import get_async_session, get_redis_client
 
 
 # Logging
@@ -22,15 +22,11 @@ def get_logger():
 
 
 # Redis client
-def get_redis_client():
-    return redis_client
-
-
 RedisClient = Annotated[aioredis.Redis, Depends(get_redis_client)]
 
 
 # DB Session
-DatabaseSession = Annotated[AsyncSession, Depends(alchemy.provide_async_session())]
+DatabaseSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 # Services

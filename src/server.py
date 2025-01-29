@@ -1,21 +1,32 @@
 import logging
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
 import uvicorn
 from fastapi import FastAPI
 
-from infrastructure.database import alchemy, drop_all_tables
+from infrastructure.database import alchemy, create_all_tables, drop_all_tables
 from presentation.controllers import all_routers
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    await create_all_tables()
+    yield
+    await drop_all_tables()
+
 
 app = FastAPI(
     title="API Library",
-    root_path="/api",
-    on_shutdown=[drop_all_tables],
+    root_path="/api/v1",
+    lifespan=lifespan,
 )
-
-alchemy.init_app(app=app)
 
 for router in all_routers:
     app.include_router(router)
+
+
+alchemy.init_app(app=app)
 
 
 if __name__ == "__main__":

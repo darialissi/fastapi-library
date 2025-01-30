@@ -29,9 +29,12 @@ env_files = [".env-test"]
 pythonpath = [".", "src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+filterwarnings = ["ignore::UserWarning"]
 markers = [  
     "integration: mark a test as an integration test",   
-    "unit: mark a test as a unit test",                  
+    "unit: mark a test as a unit test",      
+    "admin: mark a test as an admin test",    
+    "reader: mark a test as a reader test",                 
 ] 
 
 [tool.black]

@@ -58,10 +58,10 @@ async def get_current_user(
     """
 
     if not token:
-        raise AuthExceptions.AccessDeniedException()
+        raise AuthExceptions.InvalidCredentialsException()
 
     if not (sub := await token_service.get_valid_token_sub(token)):
-        raise AuthExceptions.AccessDeniedException()
+        raise AuthExceptions.InvalidCredentialsException()
 
     _, user_id, role = sub.split(":")
 

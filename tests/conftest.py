@@ -108,6 +108,25 @@ async def added_books(
 
 
 @pytest.fixture(scope="session")
+async def added_not_available_book(
+    async_client: AsyncClient,
+    register_and_login_admin: TokenSchema,
+) -> BookValidate:
+    headers = {
+        "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
+    }
+    not_available_book: BookValidate = BookValidate(
+            title=f"Not available book",
+            description=".....",
+            date_of_pub=date(2015, 1, 1).strftime("%Y-%m-%d"),
+            genres=[GenreType.NonFiction],
+            available_count=0
+        )
+    await async_client.post("/books", headers=headers, json=not_available_book.model_dump())
+    return not_available_book
+
+
+@pytest.fixture(scope="session")
 async def borrowed_book(
     async_client: AsyncClient,
     added_books: list[BookValidate],

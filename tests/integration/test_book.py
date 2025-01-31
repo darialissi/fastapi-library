@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from fastapi import status
 from httpx import AsyncClient, Response
 from schemas.book import BookBorrow, BookValidate
@@ -45,6 +46,14 @@ class TestBook:
         assert book.get("date_of_pub") == book_object.date_of_pub
         assert book.get("genres") == book_object.genres
         assert book.get("available_count") == book_object.available_count
+
+        response: Response = await async_client.post(
+            "/books", headers=headers, json=book_object.model_dump()
+        )
+
+        assert (
+            response.status_code == status.HTTP_409_CONFLICT
+        ), "Книга с указанным title уже существует"
 
         response: Response = await async_client.get("/books")
 
@@ -106,6 +115,7 @@ class TestBook:
         book_object: BookValidate,
         register_and_login_admin: TokenSchema,
         register_and_login_reader: TokenSchema,
+        added_books: list[BookValidate],
     ):
 
         headers = {
@@ -119,6 +129,7 @@ class TestBook:
         book: dict = response.json()
 
         params = BookUpdate(title="Инноваторы. Новое издание.", available_count=15)
+        invalid_params = BookUpdate(title=added_books[0].title)
 
         headers_reader = {
             "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
@@ -133,9 +144,17 @@ class TestBook:
             response.status_code == status.HTTP_403_FORBIDDEN
         ), "Обновить книгу может только администратор"
 
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        response: Response = await async_client.patch(
+            f"/books/{book.get('id')}",
+            headers=headers,
+            params=invalid_params.model_dump(exclude_none=True),
+        )
+
+        updated: dict = response.json()
+
+        assert (
+            response.status_code == status.HTTP_409_CONFLICT
+        ), "Книга с указанным title уже существует"
 
         response: Response = await async_client.patch(
             f"/books/{book.get('id')}",
@@ -172,6 +191,7 @@ class TestBook:
         headers = {
             "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
         }
+
         data: BookBorrow = BookBorrow(title=added_books[0].title)
         response: Response = await async_client.patch(
             "/books/borrow", headers=headers, params=data.model_dump()
@@ -194,14 +214,56 @@ class TestBook:
             response.status_code == status.HTTP_400_BAD_REQUEST
         ), "Читатель не может иметь больше 1 экземпляра одной книги"
 
-        not_existed: BookBorrow = BookBorrow(title="unknown")
+        not_existed: BookBorrow = BookBorrow(title="Unknown")
         response: Response = await async_client.patch(
             "/books/borrow", headers=headers, params=not_existed.model_dump()
         )
 
+        assert response.status_code == status.HTTP_404_NOT_FOUND, "Книги не существует"
+
+    
+    async def test_borrow_limit(
+        self,
+        async_client: AsyncClient,
+        register_and_login_reader: TokenSchema,
+        added_books: list[BookValidate],
+    ):
+
+        headers = {
+            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
+        }
+        cors = []
+        for i, book in enumerate(added_books):
+            data: BookBorrow = BookBorrow(title=book.title)
+            cors.append(asyncio.create_task(async_client.patch("/books/borrow", headers=headers, params=data.model_dump())))
+            if i == 5:
+                break
+        
+        responses = await asyncio.gather(*cors)
+        limit = filter(lambda r: r.result().status_code != status.HTTP_200_OK, responses)
+        assert limit, "Читатель может взять не больше 5 книг"
+
+    
+    async def test_borrow_not_available(
+        self,
+        async_client: AsyncClient,
+        register_and_login_reader: TokenSchema,
+        added_not_available_book: BookValidate,
+    ):
+
+        headers = {
+            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
+        }
+
+        data: BookBorrow = BookBorrow(title=added_not_available_book.title)
+        response: Response = await async_client.patch(
+            "/books/borrow", headers=headers, params=data.model_dump()
+        )
+
         assert (
-            response.status_code == status.HTTP_404_NOT_FOUND
-        ), "Книга не существует"
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), "Количество доступных экземпляров 0"
+
 
     async def test_return(
         self,

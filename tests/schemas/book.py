@@ -35,3 +35,8 @@ class BookBorrow(BaseModel):
     """
 
     title: str = Field(min_length=1)
+
+
+class BookID(BaseModel):
+
+    id: int

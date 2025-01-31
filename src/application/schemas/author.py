@@ -34,6 +34,7 @@ class AuthorReturn(BaseModel):
     """
 
     id: int
+    name: str
     bio: Optional[str] = Field(default="")
     date_of_birth: date
     book_id: int

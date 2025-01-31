@@ -1,5 +1,6 @@
-import pytest
 import asyncio
+
+import pytest
 from fastapi import status
 from httpx import AsyncClient, Response
 from schemas.book import BookBorrow, BookValidate
@@ -16,12 +17,11 @@ class TestBook:
         self,
         async_client: AsyncClient,
         book_object: BookValidate,
-        register_and_login_admin: TokenSchema,
-        register_and_login_reader: TokenSchema,
+        admin_token: str,
+        reader_token: str,
     ):
-        headers_reader = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers_reader = {"Authorization": reader_token}
+
         response: Response = await async_client.post(
             "/books", headers=headers_reader, json=book_object.model_dump()
         )
@@ -30,9 +30,8 @@ class TestBook:
             response.status_code == status.HTTP_403_FORBIDDEN
         ), "Добавить книгу может только администратор"
 
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers = {"Authorization": admin_token}
+
         response: Response = await async_client.post(
             "/books", headers=headers, json=book_object.model_dump()
         )
@@ -68,8 +67,8 @@ class TestBook:
         self,
         async_client: AsyncClient,
         book_object: BookValidate,
-        register_and_login_admin: TokenSchema,
-        register_and_login_reader: TokenSchema,
+        admin_token: str,
+        reader_token: str,
     ):
 
         response: Response = await async_client.get("/books")
@@ -79,9 +78,8 @@ class TestBook:
         if filtered:
             book: dict = filtered[0]
 
-        headers_reader = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers_reader = {"Authorization": reader_token}
+
         response: Response = await async_client.delete(
             f"/books/{book.get('id')}", headers=headers_reader
         )
@@ -90,9 +88,7 @@ class TestBook:
             response.status_code == status.HTTP_403_FORBIDDEN
         ), "Удалить книгу может только администратор"
 
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers = {"Authorization": admin_token}
 
         response: Response = await async_client.delete(
             f"/books/{book.get('id')}", headers=headers
@@ -113,14 +109,12 @@ class TestBook:
         self,
         async_client: AsyncClient,
         book_object: BookValidate,
-        register_and_login_admin: TokenSchema,
-        register_and_login_reader: TokenSchema,
+        admin_token: str,
+        reader_token: str,
         added_books: list[BookValidate],
     ):
 
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers = {"Authorization": admin_token}
 
         response: Response = await async_client.post(
             "/books", headers=headers, json=book_object.model_dump()
@@ -128,12 +122,11 @@ class TestBook:
 
         book: dict = response.json()
 
-        params = BookUpdate(title="Инноваторы. Новое издание.", available_count=15)
+        params = BookUpdate(title="New Edition", available_count=15)
         invalid_params = BookUpdate(title=added_books[0].title)
 
-        headers_reader = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers_reader = {"Authorization": reader_token}
+
         response: Response = await async_client.patch(
             f"/books/{book.get('id')}",
             headers=headers_reader,
@@ -171,13 +164,11 @@ class TestBook:
     async def test_borrow(
         self,
         async_client: AsyncClient,
-        register_and_login_admin: TokenSchema,
-        register_and_login_reader: TokenSchema,
+        admin_token: str,
+        reader_token: str,
         added_books: list[BookValidate],
     ):
-        headers_admin = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers_admin = {"Authorization": admin_token}
 
         data: BookBorrow = BookBorrow(title=added_books[0].title)
         response: Response = await async_client.patch(
@@ -188,9 +179,7 @@ class TestBook:
             response.status_code == status.HTTP_403_FORBIDDEN
         ), "Книгу может взять только Читатель"
 
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
 
         data: BookBorrow = BookBorrow(title=added_books[0].title)
         response: Response = await async_client.patch(
@@ -221,39 +210,40 @@ class TestBook:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND, "Книги не существует"
 
-    
     async def test_borrow_limit(
         self,
         async_client: AsyncClient,
-        register_and_login_reader: TokenSchema,
+        reader_token: str,
         added_books: list[BookValidate],
     ):
 
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
+
         cors = []
         for i, book in enumerate(added_books):
             data: BookBorrow = BookBorrow(title=book.title)
-            cors.append(asyncio.create_task(async_client.patch("/books/borrow", headers=headers, params=data.model_dump())))
+            cors.append(
+                asyncio.create_task(
+                    async_client.patch(
+                        "/books/borrow", headers=headers, params=data.model_dump()
+                    )
+                )
+            )
             if i == 5:
                 break
-        
+
         responses = await asyncio.gather(*cors)
-        limit = filter(lambda r: r.result().status_code != status.HTTP_200_OK, responses)
+        limit = list(filter(lambda r: r.status_code != status.HTTP_200_OK, responses))
         assert limit, "Читатель может взять не больше 5 книг"
 
-    
     async def test_borrow_not_available(
         self,
         async_client: AsyncClient,
-        register_and_login_reader: TokenSchema,
+        reader_token: str,
         added_not_available_book: BookValidate,
     ):
 
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
 
         data: BookBorrow = BookBorrow(title=added_not_available_book.title)
         response: Response = await async_client.patch(
@@ -264,16 +254,14 @@ class TestBook:
             response.status_code == status.HTTP_400_BAD_REQUEST
         ), "Количество доступных экземпляров 0"
 
-
     async def test_return(
         self,
         async_client: AsyncClient,
-        register_and_login_reader: TokenSchema,
+        reader_token: str,
         borrowed_book: BookValidate,
     ):
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
+
         data: BookBorrow = BookBorrow(title=borrowed_book.title)
 
         response: Response = await async_client.patch(
@@ -292,13 +280,11 @@ class TestBook:
     async def test_reader_books(
         self,
         async_client: AsyncClient,
-        register_and_login_reader: TokenSchema,
+        reader_token: str,
         borrowed_book: BookValidate,
     ):
 
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
 
         response: Response = await async_client.get("/users/me/books", headers=headers)
 

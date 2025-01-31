@@ -35,8 +35,6 @@ class TestUser:
         ), "Пользователь с существующим username"
 
     async def test_auth(self, async_client: AsyncClient, user_object: User):
-        await async_client.post("/users", json=user_object.model_dump())
-
         response: Response = await async_client.get("/users/me")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -44,7 +42,9 @@ class TestUser:
         auth = OAuth2Form(username=user_object.username, password=user_object.password)
         response: Response = await async_client.post(
             "/auth/token",
-            content="&".join(map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())),
+            content="&".join(
+                map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
+            ),  # Совместимость с OAuth2PasswordRequestForm
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
 
@@ -69,12 +69,13 @@ class TestUser:
     async def test_update(
         self, async_client: AsyncClient, user_object: User, register_and_login_reader
     ):
-        await async_client.post("/users", json=user_object.model_dump())
 
         auth = OAuth2Form(username=user_object.username, password=user_object.password)
         response: Response = await async_client.post(
             "/auth/token",
-            content="&".join(map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())),
+            content="&".join(
+                map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
+            ),  # Совместимость с OAuth2PasswordRequestForm
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
 
@@ -111,7 +112,9 @@ class TestUser:
         auth = OAuth2Form(username=user_object.username, password=user_object.password)
         response: Response = await async_client.post(
             "/auth/token",
-            content="&".join(map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())),
+            content="&".join(
+                map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
+            ),  # Совместимость с OAuth2PasswordRequestForm
             headers={"content-type": "application/x-www-form-urlencoded"},
         )
 
@@ -135,11 +138,12 @@ class TestUser:
 class TestAdmin:
 
     async def test_me(
-        self, async_client: AsyncClient, register_and_login_admin: TokenSchema
+        self,
+        async_client: AsyncClient,
+        admin_token: str,
     ):
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers = {"Authorization": admin_token}
+
         response: Response = await async_client.get("/users/me", headers=headers)
 
         assert response.status_code == status.HTTP_200_OK
@@ -150,25 +154,23 @@ class TestAdmin:
     async def test_get_readers(
         self,
         async_client: AsyncClient,
-        register_and_login_admin: TokenSchema,
-        register_and_login_reader: TokenSchema,
+        admin_token: str,
+        reader_token: str,
     ):
         response: Response = await async_client.get("/users/readers")
 
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+        headers = {"Authorization": reader_token}
+
         response: Response = await async_client.get("/users/readers", headers=headers)
 
         assert (
             response.status_code == status.HTTP_403_FORBIDDEN
         ), "Доступ только для администратора"
 
-        headers = {
-            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
-        }
+        headers = {"Authorization": admin_token}
+
         response: Response = await async_client.get("/users/readers", headers=headers)
 
         assert response.status_code == status.HTTP_200_OK
@@ -179,12 +181,9 @@ class TestAdmin:
 @pytest.mark.reader
 class TestReader:
 
-    async def test_me(
-        self, async_client: AsyncClient, register_and_login_reader: TokenSchema
-    ):
-        headers = {
-            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
-        }
+    async def test_me(self, async_client: AsyncClient, reader_token: str):
+        headers = {"Authorization": reader_token}
+
         response: Response = await async_client.get("/users/me", headers=headers)
 
         assert response.status_code == status.HTTP_200_OK

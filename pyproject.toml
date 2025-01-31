@@ -29,7 +29,10 @@ env_files = [".env-test"]
 pythonpath = [".", "src"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
-filterwarnings = ["ignore::UserWarning"]
+filterwarnings = [
+    "ignore::UserWarning",
+    "ignore::sqlalchemy.exc.SAWarning",
+    ]
 markers = [  
     "integration: mark a test as an integration test",   
     "unit: mark a test as a unit test",      

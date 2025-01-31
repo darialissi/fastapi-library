@@ -3,15 +3,15 @@ from fastapi import status
 from httpx import AsyncClient, Response
 from schemas.book import BookBorrow, BookValidate
 
-from application.schemas.token import TokenSchema
 from application.schemas.book import BookUpdate
+from application.schemas.token import TokenSchema
 
 
 @pytest.mark.asyncio(loop_scope="session")
 @pytest.mark.integration
 class TestBook:
 
-    async def test_book(
+    async def test_add(
         self,
         async_client: AsyncClient,
         book_object: BookValidate,
@@ -27,7 +27,7 @@ class TestBook:
 
         assert (
             response.status_code == status.HTTP_403_FORBIDDEN
-        ), "Добавить книгу в систему может только администратор"
+        ), "Добавить книгу может только администратор"
 
         headers = {
             "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
@@ -55,16 +55,35 @@ class TestBook:
 
         assert book in books, "Книга должна быть в списке доступных"
 
-        params = BookUpdate(title="Инноваторы. Новое издание.")
-        response: Response = await async_client.patch(
-            f"/books/{book.get('id')}",
-            headers=headers,
-            params=params.model_dump(exclude_none=True),
-        )
-        updated: dict = response.json()
+    async def test_delete(
+        self,
+        async_client: AsyncClient,
+        book_object: BookValidate,
+        register_and_login_admin: TokenSchema,
+        register_and_login_reader: TokenSchema,
+    ):
 
-        assert response.status_code == status.HTTP_200_OK
-        assert updated.get("title") == params.title
+        response: Response = await async_client.get("/books")
+        books: list = response.json()
+
+        filtered = list(filter(lambda d: d.get("title") == book_object.title, books))
+        if filtered:
+            book: dict = filtered[0]
+
+        headers_reader = {
+            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
+        }
+        response: Response = await async_client.delete(
+            f"/books/{book.get('id')}", headers=headers_reader
+        )
+
+        assert (
+            response.status_code == status.HTTP_403_FORBIDDEN
+        ), "Удалить книгу может только администратор"
+
+        headers = {
+            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
+        }
 
         response: Response = await async_client.delete(
             f"/books/{book.get('id')}", headers=headers
@@ -81,7 +100,56 @@ class TestBook:
 
         assert book not in books, "Книга не должна быть в списке доступных после удаления"
 
-    async def test_borrow_book(
+    async def test_update(
+        self,
+        async_client: AsyncClient,
+        book_object: BookValidate,
+        register_and_login_admin: TokenSchema,
+        register_and_login_reader: TokenSchema,
+    ):
+
+        headers = {
+            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
+        }
+
+        response: Response = await async_client.post(
+            "/books", headers=headers, json=book_object.model_dump()
+        )
+
+        book: dict = response.json()
+
+        params = BookUpdate(title="Инноваторы. Новое издание.", available_count=15)
+
+        headers_reader = {
+            "Authorization": f"{register_and_login_reader.token_type} {register_and_login_reader.access_token}"
+        }
+        response: Response = await async_client.patch(
+            f"/books/{book.get('id')}",
+            headers=headers_reader,
+            params=params.model_dump(exclude_none=True),
+        )
+
+        assert (
+            response.status_code == status.HTTP_403_FORBIDDEN
+        ), "Обновить книгу может только администратор"
+
+        headers = {
+            "Authorization": f"{register_and_login_admin.token_type} {register_and_login_admin.access_token}"
+        }
+
+        response: Response = await async_client.patch(
+            f"/books/{book.get('id')}",
+            headers=headers,
+            params=params.model_dump(exclude_none=True),
+        )
+
+        updated: dict = response.json()
+
+        assert response.status_code == status.HTTP_200_OK
+        assert updated.get("title") == params.title
+        assert updated.get("available_count") == params.available_count
+
+    async def test_borrow(
         self,
         async_client: AsyncClient,
         register_and_login_admin: TokenSchema,
@@ -118,7 +186,6 @@ class TestBook:
             book.get("available_count") == added_books[0].available_count - 1
         ), "Количество доступных экземпляров должно уменьшиться"
 
-        # SAWarning - commit не происходит, исключение отрабатывается верно
         response: Response = await async_client.patch(
             "/books/borrow", headers=headers, params=data.model_dump()
         )
@@ -134,9 +201,9 @@ class TestBook:
 
         assert (
             response.status_code == status.HTTP_404_NOT_FOUND
-        ), "Книга не существует в системе"
+        ), "Книга не существует"
 
-    async def test_return_book(
+    async def test_return(
         self,
         async_client: AsyncClient,
         register_and_login_reader: TokenSchema,

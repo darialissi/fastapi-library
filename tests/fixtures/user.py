@@ -22,7 +22,7 @@ async def register_and_login_admin(async_client: AsyncClient) -> TokenSchema:
         content="&".join(
             map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
         ),  # Совместимость с OAuth2PasswordRequestForm
-        headers={"content-type": "application/x-www-form-urlencoded"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     return TokenSchema(**response.json())
 
@@ -44,7 +44,7 @@ async def register_and_login_reader(async_client: AsyncClient) -> TokenSchema:
         content="&".join(
             map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
         ),  # Совместимость с OAuth2PasswordRequestForm
-        headers={"content-type": "application/x-www-form-urlencoded"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
     )
     return TokenSchema(**response.json())
 

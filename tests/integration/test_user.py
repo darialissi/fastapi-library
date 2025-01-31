@@ -32,7 +32,7 @@ class TestUser:
 
         assert (
             response.status_code == status.HTTP_409_CONFLICT
-        ), "Пользователь с существующим username"
+        ), "Username зарегистрирован за другим пользователем"
 
     async def test_auth(self, async_client: AsyncClient, user_object: User):
         response: Response = await async_client.get("/users/me")
@@ -45,7 +45,7 @@ class TestUser:
             content="&".join(
                 map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
             ),  # Совместимость с OAuth2PasswordRequestForm
-            headers={"content-type": "application/x-www-form-urlencoded"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         assert response.status_code == status.HTTP_200_OK
@@ -76,7 +76,7 @@ class TestUser:
             content="&".join(
                 map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
             ),  # Совместимость с OAuth2PasswordRequestForm
-            headers={"content-type": "application/x-www-form-urlencoded"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         token: TokenSchema = TokenSchema(**response.json())
@@ -115,7 +115,7 @@ class TestUser:
             content="&".join(
                 map(lambda i: f"{i[0]}={i[1]}", auth.model_dump().items())
             ),  # Совместимость с OAuth2PasswordRequestForm
-            headers={"content-type": "application/x-www-form-urlencoded"},
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
         )
 
         token: TokenSchema = TokenSchema(**response.json())
@@ -167,7 +167,7 @@ class TestAdmin:
 
         assert (
             response.status_code == status.HTTP_403_FORBIDDEN
-        ), "Доступ только для администратора"
+        ), "Просмотр списка читателей доступен только администратору"
 
         headers = {"Authorization": admin_token}
 

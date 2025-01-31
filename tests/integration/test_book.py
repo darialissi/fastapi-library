@@ -6,7 +6,6 @@ from httpx import AsyncClient, Response
 from schemas.book import BookBorrow, BookValidate
 
 from application.schemas.book import BookUpdate
-from application.schemas.token import TokenSchema
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -75,8 +74,10 @@ class TestBook:
         books: list = response.json()
 
         filtered = list(filter(lambda d: d.get("title") == book_object.title, books))
-        if filtered:
-            book: dict = filtered[0]
+
+        assert filtered, "Книга должна быть добавлена"
+
+        book: dict = filtered[0]
 
         headers_reader = {"Authorization": reader_token}
 
@@ -223,10 +224,8 @@ class TestBook:
         for i, book in enumerate(added_books):
             data: BookBorrow = BookBorrow(title=book.title)
             cors.append(
-                asyncio.create_task(
-                    async_client.patch(
-                        "/books/borrow", headers=headers, params=data.model_dump()
-                    )
+                async_client.patch(
+                    "/books/borrow", headers=headers, params=data.model_dump()
                 )
             )
             if i == 5:

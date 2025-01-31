@@ -5,7 +5,6 @@ from schemas.author import AuthorID, AuthorValidate
 from schemas.book import BookID, BookValidate
 
 from application.schemas.author import AuthorReturn, AuthorUpdate
-from application.schemas.token import TokenSchema
 
 
 @pytest.mark.asyncio(loop_scope="session")
@@ -72,7 +71,7 @@ class TestAuthor:
 
         authors: list = response.json()
 
-        assert authors
+        assert authors, "Список авторов книги не должен быть пустым"
 
         response: Response = await async_client.get("/authors")
 
@@ -80,7 +79,9 @@ class TestAuthor:
 
         authors: list = response.json()
 
-        assert authors
+        assert list(
+            filter(lambda d: d.get("book_id") == book_id_object.id, authors)
+        ), "Список авторов должен содержать автора добавленной книги"
 
     async def test_update(
         self,
@@ -89,7 +90,7 @@ class TestAuthor:
         admin_token: str,
         reader_token: str,
     ):
-        params = AuthorUpdate(bio="new bio information")
+        params = AuthorUpdate(bio="New bio information")
 
         headers_reader = {"Authorization": reader_token}
 

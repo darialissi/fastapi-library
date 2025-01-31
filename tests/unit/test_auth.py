@@ -29,6 +29,7 @@ class TestToken:
         "sub",
         [
             "user:1:admin",
+            "user:2:reader",
         ],
     )
     def test_valid(self, sub: str):
@@ -42,6 +43,7 @@ class TestToken:
         "sub",
         [
             "user:1:admin",
+            "user:2:reader",
         ],
     )
     def test_invalid(self, sub: str):

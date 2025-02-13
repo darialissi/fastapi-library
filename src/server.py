@@ -36,7 +36,7 @@ if __name__ == "__main__":
         format="%(asctime)s %(levelname)s %(message)s",
     )
     uvicorn.run(
-        "server:app",
+        app=app,
         host="0.0.0.0",
         port=8000,
     )

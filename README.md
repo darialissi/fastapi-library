@@ -7,11 +7,11 @@
 
 #
 
-#### Запуск приложения при помощи Docker
+#### Запуск приложения при помощи Docker (docker compose v2)
 
 - *git clone https://github.com/darialissi/fastapi-library.git*
 
-- *cd fastapi-library && docker-compose up*
+- *cd fastapi-library && docker compose --profile prod up*
 #
 
 Документация доступна на *http://127.0.0.1:8000/docs*
@@ -25,7 +25,7 @@
 
 1. Поднимаем postgres и redis
    
-   *docker-compose --file docker-compose.local-tests.yml up -d*
+   *docker compose --profile test up -d*
 
 2. Устанавливаем poetry
 
@@ -33,7 +33,7 @@
 
 3. Подтягиваем зависимости
    
-   *poetry install*
+   *poetry install --no-root*
 
 4. Запускаем pytest
    

@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -9,7 +9,7 @@ WORKDIR /f_app
 
 COPY poetry.lock pyproject.toml /
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi --no-root
+    poetry install --without dev --no-interaction --no-ansi --no-root
 
 COPY . .
 

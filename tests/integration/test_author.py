@@ -79,7 +79,7 @@ class TestAuthor:
 
         authors: list = response.json()
 
-        assert list(
+        assert any(
             filter(lambda d: d.get("book_id") == book_id_object.id, authors)
         ), "Список авторов должен содержать автора добавленной книги"
 
@@ -146,9 +146,9 @@ class TestAuthor:
 
         assert response.status_code == status.HTTP_200_OK
 
-        result: AuthorReturn = AuthorReturn(**response.json())
+        deleted: AuthorReturn = AuthorReturn(**response.json())
 
-        assert result.id == author_id_object.id
+        assert deleted.id == author_id_object.id
 
         response: Response = await async_client.get(f"/books/{book_id_object.id}/authors")
 
@@ -157,5 +157,5 @@ class TestAuthor:
         authors: list = response.json()
 
         assert (
-            list(filter(lambda d: d.get("id") == author_id_object.id, authors)) == []
+            deleted not in authors
         ), "Список авторов книги не должен содержать удаленного автора"

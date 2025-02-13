@@ -211,48 +211,6 @@ class TestBook:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND, "Книги не существует"
 
-    async def test_borrow_limit(
-        self,
-        async_client: AsyncClient,
-        reader_token: str,
-        added_books: list[BookValidate],
-    ):
-
-        headers = {"Authorization": reader_token}
-
-        cors = []
-        for i, book in enumerate(added_books):
-            data: BookBorrow = BookBorrow(title=book.title)
-            cors.append(
-                async_client.patch(
-                    "/books/borrow", headers=headers, params=data.model_dump()
-                )
-            )
-            if i == 5:
-                break
-
-        responses = await asyncio.gather(*cors)
-        limit = list(filter(lambda r: r.status_code != status.HTTP_200_OK, responses))
-        assert limit, "Читатель может взять не больше 5 книг"
-
-    async def test_borrow_not_available(
-        self,
-        async_client: AsyncClient,
-        reader_token: str,
-        added_not_available_book: BookValidate,
-    ):
-
-        headers = {"Authorization": reader_token}
-
-        data: BookBorrow = BookBorrow(title=added_not_available_book.title)
-        response: Response = await async_client.patch(
-            "/books/borrow", headers=headers, params=data.model_dump()
-        )
-
-        assert (
-            response.status_code == status.HTTP_400_BAD_REQUEST
-        ), "Количество доступных экземпляров 0"
-
     async def test_return(
         self,
         async_client: AsyncClient,
@@ -275,6 +233,55 @@ class TestBook:
         assert (
             book.get("available_count") == borrowed_book.available_count
         ), "Количество доступных экземпляров должно увеличиться после возврата"
+
+    async def test_borrow_limit(
+        self,
+        async_client: AsyncClient,
+        reader_token: str,
+        added_books: list[BookValidate],
+    ):
+
+        headers = {"Authorization": reader_token}
+
+        cors = []
+        for i, book in enumerate(added_books, 1):
+            data: BookBorrow = BookBorrow(title=book.title)
+            cors.append(
+                async_client.patch(
+                    "/books/borrow", headers=headers, params=data.model_dump()
+                )
+            )
+            if i == 6:
+                break
+
+        responses = await asyncio.gather(*cors)
+
+        assert (
+            sum(map(lambda r: r.status_code == status.HTTP_200_OK, responses)) == 5
+        ), "Количество успешно взятых книг ограничено на 5"
+
+        assert (
+            sum(map(lambda r: r.status_code == status.HTTP_400_BAD_REQUEST, responses))
+            == 1
+        ), "Читатель может взять не больше 5 книг"
+
+    async def test_borrow_not_available(
+        self,
+        async_client: AsyncClient,
+        reader_token: str,
+        added_not_available_book: BookValidate,
+    ):
+
+        headers = {"Authorization": reader_token}
+
+        data: BookBorrow = BookBorrow(title=added_not_available_book.title)
+        response: Response = await async_client.patch(
+            "/books/borrow", headers=headers, params=data.model_dump()
+        )
+
+        assert (
+            response.status_code == status.HTTP_400_BAD_REQUEST
+        ), "Количество доступных экземпляров 0"
 
     async def test_reader_books(
         self,

@@ -1,0 +1,49 @@
+services:
+
+  app:
+    container_name: app_prod
+    build: .
+    env_file:
+      - .env-docker
+    ports:
+      - '8000:8000'
+    depends_on: 
+      - db
+      - rd
+    profiles: [prod]
+
+  db:
+    container_name: postgres_prod
+    image: postgres:alpine
+    env_file:
+      - .env-docker
+    ports:
+      - '5435:5432'
+    profiles: [prod]
+
+  rd:
+    container_name: redis_prod
+    image: redis:alpine
+    env_file:
+      - .env-docker
+    ports:
+      - '6385:6379'
+    profiles: [prod]
+
+  db_dev:
+    container_name: postgres_dev
+    image: postgres:alpine
+    env_file:
+      - .env-docker
+    ports:
+      - '5434:5432'
+    profiles: [test]
+
+  rd_dev:
+    container_name: redis_dev
+    image: redis:alpine
+    env_file:
+      - .env-docker
+    ports:
+      - '6384:6379'
+    profiles: [test]

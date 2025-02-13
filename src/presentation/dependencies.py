@@ -17,7 +17,7 @@ from infrastructure.database import get_async_session, get_redis_client
 
 
 # Logging
-def get_logger():
+async def get_logger():
     return logging.getLogger(__name__)
 
 
@@ -30,17 +30,17 @@ DatabaseSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 # Services
-def provide_users_service(db_session: DatabaseSession):
+async def provide_users_service(db_session: DatabaseSession):
     return UserService(UserRepo(session=db_session))
 
 
-def provide_books_service(db_session: DatabaseSession):
+async def provide_books_service(db_session: DatabaseSession):
     return BookService(BookRepo(session=db_session))
 
 
-def provide_authors_service(db_session: DatabaseSession):
+async def provide_authors_service(db_session: DatabaseSession):
     return AuthorService(AuthorRepo(session=db_session))
 
 
-def provide_token_service(rd_client: RedisClient):
+async def provide_token_service(rd_client: RedisClient):
     return TokenService(TokenRepo(redis_client=rd_client))

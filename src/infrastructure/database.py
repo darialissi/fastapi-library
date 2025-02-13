@@ -35,5 +35,5 @@ get_async_session = alchemy.provide_async_session()
 redis_client = aioredis.from_url(settings.REDIS_URL)
 
 
-def get_redis_client():
+async def get_redis_client():
     return redis_client

@@ -9,9 +9,17 @@
 
 #### Запуск приложения при помощи Docker (docker compose v2)
 
-- *git clone https://github.com/darialissi/fastapi-library.git*
 
-- *cd fastapi-library && docker compose --profile prod up*
+1. Клонируем репозиторий
+   
+   ```
+   git clone https://github.com/darialissi/fastapi-library.git
+   ```
+2. Переходим в директорию проекта и запускаем
+   
+   ```
+   cd fastapi-library && docker compose --profile prod up
+   ```
 #
 
 Документация доступна на *http://127.0.0.1:8000/docs*
@@ -23,18 +31,26 @@
 
 #### Тестирование
 
-1. Поднимаем postgres и redis
+1. Поднимаем postgres и redis в тестовом окружении
    
-   *docker compose --profile test up -d*
+   ```
+   docker compose --profile test up -d
+   ```
 
 2. Устанавливаем poetry
 
-   *pip install poetry*
+   ```
+   pip install poetry
+   ```
 
 3. Подтягиваем зависимости
    
-   *poetry install --no-root*
+   ```
+   poetry install --no-root
+   ```
 
 4. Запускаем pytest
    
-   *poetry run pytest*
+   ```
+   poetry run pytest
+   ```

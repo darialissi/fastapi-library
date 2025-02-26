@@ -9,7 +9,7 @@ services:
       - '8000:8000'
     depends_on: 
       - db
-      - rd
+      - redis
     profiles: [prod]
 
   db:
@@ -21,11 +21,9 @@ services:
       - '5435:5432'
     profiles: [prod]
 
-  rd:
+  redis:
     container_name: redis_prod
     image: redis:alpine
-    env_file:
-      - .env-docker
     ports:
       - '6385:6379'
     profiles: [prod]
@@ -39,11 +37,9 @@ services:
       - '5434:5432'
     profiles: [test]
 
-  rd_dev:
+  redis_dev:
     container_name: redis_dev
     image: redis:alpine
-    env_file:
-      - .env-docker
     ports:
       - '6384:6379'
     profiles: [test]
